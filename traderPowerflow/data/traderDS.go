@@ -3,7 +3,7 @@ package data
 import (
 	"fmt"
 	"github.com/edgexfoundry/go-mod-core-contracts/models"
-	"github.com/edgexfoundry/powerflow/common/identity"
+	"github.com/edgexfoundry/powerflow/commonPowerFlow/identity"
 	"github.com/edgexfoundry/powerflow/traderPowerflow/config"
 	"log"
 	"os"
