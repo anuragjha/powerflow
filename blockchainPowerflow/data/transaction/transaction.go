@@ -66,18 +66,18 @@ func (tx *Transaction) Show() string {
 }
 
 func (tx *Transaction) CreateTxSig(fromCid identity.Identity) []byte {
-	//return identity.GenerateSignature(fromCid.PrivateKeyHexStr, tx.TransactionToJsonByteArray())
-
-	return fromCid.GenSignature(tx.TransactionToJsonByteArray())
+	return identity.GenerateSignature(fromCid.PrivateKeyHexStr, tx.TransactionToJsonByteArray())
+	//old - return fromCid.GenSignature(tx.TransactionToJsonByteArray())
 }
 
-func (tx *Transaction) CreateTxSigForMiner(fromId s.Identity) []byte {
-	return fromId.GenSignature(tx.TransactionToJsonByteArray())
+func (tx *Transaction) CreateTxSigForMiner(fromId identity.Identity) []byte {
+	return identity.GenerateSignature(fromId.PrivateKeyHexStr, tx.TransactionToJsonByteArray())
+	// old - return fromId.GenSignature(tx.TransactionToJsonByteArray())
 }
 
-func VerifyTxSig(fromPid s.PublicIdentity, tx Transaction, txSig []byte) bool {
-
-	return s.VerifySingature(fromPid.PublicKey, tx.TransactionToJsonByteArray(), txSig)
+func VerifyTxSig(fromPid identity.PublicIdentity, tx Transaction, txSig []byte) bool {
+	return identity.VerifySignature(tx.TransactionToJsonByteArray(), txSig, fromPid.GetPublicKeyBytes())
+	// old - return s.VerifySingature(fromPid.PublicKey, tx.TransactionToJsonByteArray(), txSig)
 }
 
 func (tx *Transaction) TransactionToJsonByteArray() []byte {
@@ -108,24 +108,3 @@ func JsonToTransaction(txJson string) Transaction {
 
 	return tx
 }
-
-//func IsTransactionValid(tx Transaction, balanceBook BalanceBook) bool {
-//
-//	//balanceBook.Book <hash of PublicKey, Balance Amount>
-//	//getting hash of public key of tx.From - to get key for balance.Book
-//	//hash :=sha3.Sum256(tx.From.PublicKey.N.Bytes())
-//	//hashKey := hex.EncodeToString(hash[:])
-//	//using hashKey to get the Balance amount
-//	//balanceStr, err := balanceBook.Book.Get(hashKey)
-//	//balance, err := strconv.ParseFloat(balanceStr, 64) // todo ?? if ERR then should i make balance zero ???? !!!
-//	//if err != nil {
-//	//	return false
-//	//}
-//
-//	//if  balance > tx.Tokens {
-//	//	return true
-//	//}
-//	//return false
-//
-//	return balanceBook.IsBalanceEnough(balanceBook.GetKey(tx.From.PublicKey), tx.Tokens+tx.Fees)
-//}

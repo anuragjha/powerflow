@@ -4,29 +4,30 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/edgexfoundry/powerflow/blockchainPowerflow/data/transaction"
 	"log"
 	"sync"
 )
 
 //this is for mining
 type TransactionPool struct {
-	Pool      map[string]Transaction `json:"pool"`
-	Confirmed map[string]bool        `json:"confirmed"`
+	Pool      map[string]transaction.Transaction `json:"pool"`
+	Confirmed map[string]bool                    `json:"confirmed"`
 	mux       sync.Mutex
 }
 
 type TransactionPoolJson struct {
-	Pool map[string]Transaction `json:"pool"`
+	Pool map[string]transaction.Transaction `json:"pool"`
 }
 
 func NewTransactionPool() TransactionPool {
 	return TransactionPool{
-		Pool:      make(map[string]Transaction),
+		Pool:      make(map[string]transaction.Transaction),
 		Confirmed: make(map[string]bool),
 	}
 }
 
-func (txp *TransactionPool) AddToTransactionPool(tx Transaction) { //duplicates in transactinon pool
+func (txp *TransactionPool) AddToTransactionPool(tx transaction.Transaction) { //duplicates in transactinon pool
 	txp.mux.Lock()
 	defer txp.mux.Unlock()
 
@@ -65,11 +66,11 @@ func (txp *TransactionPool) Show() string {
 	return byteBuf.String()
 }
 
-func (txp *TransactionPool) ReadFromTransactionPool(n int) map[string]Transaction {
+func (txp *TransactionPool) ReadFromTransactionPool(n int) map[string]transaction.Transaction {
 	txp.mux.Lock()
 	defer txp.mux.Unlock()
 
-	tempMap := make(map[string]Transaction)
+	tempMap := make(map[string]transaction.Transaction)
 	counter := 0
 	for txid, tx := range txp.Pool {
 
@@ -136,7 +137,7 @@ func (txp *TransactionPool) GetTransactionPoolJsonObj() TransactionPoolJson {
 	defer txp.mux.Unlock()
 
 	txpj := TransactionPoolJson{}
-	txpj.Pool = make(map[string]Transaction)
+	txpj.Pool = make(map[string]transaction.Transaction)
 	//copyOfTxPool := make(map[string]Transaction)
 	for k := range txp.Pool {
 		txpj.Pool[k] = txp.Pool[k]

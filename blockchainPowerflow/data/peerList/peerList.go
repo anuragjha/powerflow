@@ -18,11 +18,11 @@ type Peer struct {
 	Pid    s.PublicIdentity
 }
 
-//PeerList contains selfId, peerMap, max length, and a mutex
+//PeerList contains numId, peerMap, max length, and a mutex
 type PeerList struct {
-	selfId     int32
-	selfIpPort string
-	secureId   s.Identity
+	numId    int32
+	ipPort   string
+	secureId s.Identity
 	//peerMap    map[string]int32
 	//peerMapPid map[string]s.PublicIdentity
 	pairMap   map[string]int32
@@ -30,6 +30,31 @@ type PeerList struct {
 	maxLength int32
 
 	mux sync.Mutex
+}
+
+//NewPeerList func creates a New PeerList for a id and maxLength
+func NewPeerList(numId int32, selfIpPort string, secureId s.Identity, maxLength int32) PeerList {
+
+	return PeerList{
+		numId:     numId,
+		ipPort:    selfIpPort,
+		secureId:  secureId,
+		pairMap:   make(map[string]int32),
+		peers:     make(map[string]Peer),
+		maxLength: maxLength,
+	}
+}
+
+// ONLY FOR TEST PURPOSES
+func TestNewPeerList(id int32 /*sid s.Identity,*/, maxLength int32) PeerList {
+
+	return PeerList{
+		numId: id,
+		/*secureId:   sid,*/
+		pairMap:   make(map[string]int32),
+		peers:     make(map[string]Peer),
+		maxLength: maxLength,
+	}
 }
 
 ///////////
@@ -66,30 +91,6 @@ func sortMapByValue(m map[string]int32) PairList {
 }
 
 ///////////
-
-//NewPeerList func creates a New PeerList for a id and maxLength
-func NewPeerList(id int32, sid s.Identity, maxLength int32) PeerList {
-
-	return PeerList{
-		selfId:    id,
-		secureId:  sid,
-		pairMap:   make(map[string]int32),
-		peers:     make(map[string]Peer),
-		maxLength: maxLength,
-	}
-}
-
-// ONLY FOR TEST PURPOSES
-func TestNewPeerList(id int32 /*sid s.Identity,*/, maxLength int32) PeerList {
-
-	return PeerList{
-		selfId: id,
-		/*secureId:   sid,*/
-		pairMap:   make(map[string]int32),
-		peers:     make(map[string]Peer),
-		maxLength: maxLength,
-	}
-}
 
 //Add func adds a peer with addr and id to peerMap
 func (peers *PeerList) Add(addr string, id int32) {
@@ -133,7 +134,7 @@ func (peers *PeerList) Rebalance() {
 
 		//fmt.Println("in Rebalance")
 		//fmt.Println("in Rebalance : original peerMap length : ", len(peers.peerMap))
-		peers.pairMap[peers.selfIpPort] = peers.selfId //adding self id to peerMap
+		peers.pairMap[peers.ipPort] = peers.numId //adding self id to peerMap
 		sortedAddrIDList := sortMapByValue(peers.pairMap)
 		//fmt.Println("in Rebalance : sortedAddrIDList : ", sortedAddrIDList)
 		sortedAddrIDListLength := len(sortedAddrIDList)
@@ -152,7 +153,7 @@ func (peers *PeerList) getBalancedPeerMap(sortedAddrIDListLength int, sortedAddr
 	for i := 0; i < sortedAddrIDListLength; i++ {
 		r.Value = sortedAddrIDList[i]
 		//fmt.Println("in Rebalance : r.Value : ", r.Value)
-		if sortedAddrIDList[i].id == peers.selfId {
+		if sortedAddrIDList[i].id == peers.numId {
 			useRingPtr = r
 			//fmt.Println("in Rebalance : useRingPtr : ", useRingPtr)
 		}
@@ -201,10 +202,10 @@ func (peers *PeerList) ShowPids() string {
 	return buffer.String()
 }
 
-////Register func assigns a value to selfId
+////Register func assigns a value to numId
 //func (peers *PeerList) Register(id int32) {
-//	peers.selfId = id
-//	fmt.Printf("SelfId=%v\n", id)
+//	peers.numId = id
+//	fmt.Printf("NumId=%v\n", id)
 //}
 
 //Copy func returns a copy of the peerMap
@@ -235,9 +236,9 @@ func (peers *PeerList) CopyPids() map[string]Peer {
 	return copyOfPeers
 }
 
-//GetSelfId func returns selfId of Peer
-func (peers *PeerList) GetSelfId() int32 {
-	return peers.selfId
+//GetNumId func returns numId of Peer
+func (peers *PeerList) GetNumId() int32 {
+	return peers.numId
 }
 
 //PeerMapToJson func returns a json string of PeerMap or an error

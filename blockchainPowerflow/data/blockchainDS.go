@@ -1,9 +1,11 @@
 package data
 
 import (
+	"fmt"
 	"github.com/edgexfoundry/go-mod-core-contracts/models"
 	"github.com/edgexfoundry/powerflow/blockchainPowerflow/data/peerList"
 	"github.com/edgexfoundry/powerflow/blockchainPowerflow/data/syncBlockchain"
+	"github.com/edgexfoundry/powerflow/blockchainPowerflow/data/transactionPool"
 	"github.com/edgexfoundry/powerflow/traderPowerflow/config"
 
 	//"github.com/edgexfoundry/go-mod-core-contracts/models"
@@ -33,31 +35,28 @@ type blockchainDS struct {
 	IpPort, RegisterIpPort string
 	//blockchain Identity - used as Id for blockchain
 	BlockchainId identity.Identity
-	//Peers hold peers detail and manage peers, is safe for distributed use
+	//Peers hold peers detail and manage peers, is SAFE for distributed use
 	Peers peerList.PeerList
-	//Transaction Pool
-	TxPool tkn.TransactionPool
-
-	// SBC is safe for distributed use
+	//Transaction Pool, is SAFE for distributed use
+	TxPool transactionPool.TransactionPool
+	// SBC is SAFE for distributed use
 	SBC syncBlockchain.SyncBlockchain
 
 	// locks for variables defined above
-	traderIdMux           sync.Mutex
-	edgexDevicesMux       sync.Mutex
-	edgexDevicesEventsMux sync.Mutex
+	blockchainIdMux sync.Mutex
 }
 
 // Single instance of traderDS
-var InstanceTraderDS *traderDS
+var InstanceBlockchainDS *blockchainDS
 
 // Allowing "run only once" behaviour
 var onceDataStore sync.Once
 
 // Method to initialize Single instance of traderDS
-func SetDataStore(label string, ipPort string) *traderDS {
+func SetDataStore(label string, ipPort string) *blockchainDS {
 	onceDataStore.Do(func() {
 		// setting up traderId for InstanceTraderDS
-		var traderId identity.Identity
+		var blockchainId identity.Identity
 		if label == "Anon" { // todo : make logic streamlined
 			if _, err := os.Stat(config.PRIVATEKEYFILE); err == nil { // here, checking if old identity has to be loaded
 				log.Println("Loading old key ...")
@@ -65,20 +64,24 @@ func SetDataStore(label string, ipPort string) *traderDS {
 					i := identity.LoadIdentityFromFile(config.IDENTITYFILE) // here, loading whole Identity just to get label of stored id
 					label = i.Label
 				}
-				traderId = identity.OldIdentity(label, ipPort, config.PRIVATEKEYFILE)
+				blockchainId = identity.OldIdentity(label, ipPort, config.PRIVATEKEYFILE)
 			}
 		} else {
-			traderId = identity.NewIdentity(label, ipPort, config.PRIVATEKEYFILE, config.IDENTITYFILE)
+			blockchainId = identity.NewIdentity(label, ipPort, config.PRIVATEKEYFILE, config.IDENTITYFILE)
 		}
 		// setting up InstanceTraderDS
-		InstanceTraderDS = &traderDS{
-			TraderId:           traderId,
-			edgexDevices:       make(map[string]models.Device),
-			edgexDevicesEvents: make(map[string]map[string]models.Reading),
+		InstanceBlockchainDS = &blockchainDS{
+			IpPort:          "",
+			RegisterIpPort:  "",
+			BlockchainId:    blockchainId,
+			Peers:           peerList.PeerList{},
+			TxPool:          transactionPool.TransactionPool{},
+			SBC:             syncBlockchain.SyncBlockchain{},
+			blockchainIdMux: sync.Mutex{},
 		}
 	})
-	fmt.Println(InstanceTraderDS)
-	return InstanceTraderDS
+	fmt.Println(InstanceBlockchainDS)
+	return InstanceBlockchainDS
 }
 
 //func GetDataStore() *traderDS {
